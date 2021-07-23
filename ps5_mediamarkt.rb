@@ -8,7 +8,7 @@ require 'rest-client'
 
 class MediaMarktSraper
 	def initialize
-		Puppeteer.launch(headless: false, args: ['--window-size=2560,1600','--no-sandbox']) do |browser|
+		Puppeteer.launch(headless: true, args: ['--window-size=2560,1600','--no-sandbox']) do |browser|
 		  @page = browser.new_page
 		  @page.viewport = Puppeteer::Viewport.new(width: 1280, height: 800)
 		  @page_links =["https://www.mediamarkt.de/de/product/_sony-playstation%C2%AE5-digital-edition-2661939.html","https://www.mediamarkt.de/de/product/_sony-ps5-digital-ps-plus-90-tage-mitgliedschaft-2739309.html?utm_source=easymarketing&utm_medium=aff-content&utm_term=50004&utm_campaign=Deeplinkgenerator-AO&emid=60fb3e62a1914509d016e021"]
