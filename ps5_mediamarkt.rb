@@ -4,7 +4,7 @@ require 'pry-byebug'
 
 class MediaMarktSraper
 	def initialize
-		Puppeteer.launch(headless: false, args: ['--window-size=1280,800','--no-sandbox']) do |browser|
+		Puppeteer.launch(headless: true, args: ['--window-size=1280,800','--no-sandbox']) do |browser|
 		  @page = browser.new_page
 		  @page.viewport = Puppeteer::Viewport.new(width: 1280, height: 800)
 		  login
