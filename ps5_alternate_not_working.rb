@@ -2,7 +2,7 @@ require 'puppeteer'
 require 'dotenv/load'
 require 'pry-byebug'
 
-Puppeteer.launch(headless: false, args: ['--window-size=1280,800']) do |browser|
+Puppeteer.launch(headless: false, args: ['--window-size=1280,800','--no-sandbox']) do |browser|
   @page = browser.new_page
   @page.viewport = Puppeteer::Viewport.new(width: 1280, height: 800)
   @page.goto("https://www.alternate.de/login.xhtml")

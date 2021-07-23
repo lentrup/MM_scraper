@@ -14,7 +14,7 @@ class MediaMarktSraper
 
 	def login
 		@page.goto("https://www.mediamarkt.de/de/myaccount/auth/login", wait_until: 'domcontentloaded')
-		wait
+		wait_longer
 		accept_cookies = @page.query_selector("button[id='privacy-layer-accept-all-button']")
 		wait
 		accept_cookies.click
