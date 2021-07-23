@@ -11,6 +11,7 @@ class MediaMarktSraper
 		Puppeteer.launch(headless: false, args: ['--window-size=2560,1600','--no-sandbox']) do |browser|
 		  @page = browser.new_page
 		  @page.viewport = Puppeteer::Viewport.new(width: 1280, height: 800)
+		  @page_links =["https://www.mediamarkt.de/de/product/_sony-playstation%C2%AE5-digital-edition-2661939.html","https://www.mediamarkt.de/de/product/_sony-ps5-digital-ps-plus-90-tage-mitgliedschaft-2739309.html?utm_source=easymarketing&utm_medium=aff-content&utm_term=50004&utm_campaign=Deeplinkgenerator-AO&emid=60fb3e62a1914509d016e021"]
 		  login
 		  start_cycle
 		end
@@ -40,7 +41,7 @@ class MediaMarktSraper
 	def start_cycle
 		send_message("#{Time.new.to_s} | I am still online and runnning")
 		add_to_cart_btn = product_available?
-		if product_available?
+		if add_to_cart_btn
 			send_message("#{Time.new.to_s} | PS5 AVAILABLE!!!!!!!!") 
 			go_to_checkout
 		else
@@ -51,22 +52,26 @@ class MediaMarktSraper
 
 	def product_available?
 		wait_longer
-		# @page.goto("https://www.mediamarkt.de/de/product/_sony-playstation%C2%AE5-digital-edition-2661939.html", wait_until: 'domcontentloaded')
-		@page.goto("https://www.mediamarkt.de/de/product/_isy-ita-751-2-2668534.html", wait_until: 'domcontentloaded')
+		@page.goto("https://www.mediamarkt.de/de/product/_sony-playstation%C2%AE5-digital-edition-2661939.html", wait_until: 'domcontentloaded')
+		# @page.goto("https://www.mediamarkt.de/de/product/_isy-ita-751-2-2668534.html", wait_until: 'domcontentloaded')
 		wait
 		add_to_cart_btn = @page.query_selector("button[id='pdp-add-to-cart-button']")
-		@page.evaluate(String.new("document.querySelector(`button[id='pdp-add-to-cart-button']`).click()"))
+		@page.evaluate("document.querySelector(`button[id='pdp-add-to-cart-button']`).click()") if add_to_cart_btn
 		add_to_cart_btn
 	end
 
 	def go_to_checkout
 		wait
-		@page.goto("https://www.mediamarkt.de/checkout", wait_until: 'domcontentloaded')
+		@page.goto("https://www.mediamarkt.de/checkout/payment", wait_until: 'domcontentloaded')
 		wait
-		go_to_checkout_btn = @page.query_selector(".bGZfev")
+		# selecting the vorkasse option
+		@page.wait_for_selector(".dttyiN .bGZfev")
+
+		@page.evaluate("() => { Array.prototype.slice.call(document.querySelectorAll('div')).filter(function(el){return el.textContent==='Vorkasse'})[0].click()}")
 		wait
-		go_to_checkout_btn.click
+		continue_to_summary_btn = @page.evaluate("() => { document.querySelector('.dttyiN .bGZfev').click()}")
 		wait
+		@page.wait_for_selector(".StepWrapperstyled__StyledSummary-sc-1mi7ueb-4 .bGZfev")
 		purchase_btn = @page.query_selector(".StepWrapperstyled__StyledSummary-sc-1mi7ueb-4 .bGZfev")
 		# wait
 		# purchase_btn.click
@@ -74,14 +79,17 @@ class MediaMarktSraper
 	end
 
 	def wait
+		puts "waiting.."
 		sleep(rand(1..2))
 	end
 
 	def wait_medium
+		puts "waiting medium.."
 		sleep(rand(5..8))
 	end
 
 	def wait_longer
+		puts "waiting longer.."
 		# still need to tweak this one to lower it so that it does not trigger the captcha
 		sleep(rand(20..30))
 	end
