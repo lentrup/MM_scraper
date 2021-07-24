@@ -11,7 +11,12 @@ class MediaMarktSraper
 		Puppeteer.launch(headless: true, args: ['--window-size=2560,1600','--no-sandbox']) do |browser|
 		  @page = browser.new_page
 		  @page.viewport = Puppeteer::Viewport.new(width: 1280, height: 800)
-		  @page_links =["https://www.mediamarkt.de/de/product/_sony-playstation%C2%AE5-digital-edition-2661939.html","https://www.mediamarkt.de/de/product/_sony-ps5-digital-ps-plus-90-tage-mitgliedschaft-2739309.html?utm_source=easymarketing&utm_medium=aff-content&utm_term=50004&utm_campaign=Deeplinkgenerator-AO&emid=60fb3e62a1914509d016e021"]
+		  @page_links =[
+		  	"https://www.mediamarkt.de/de/product/_sony-playstation%C2%AE5-digital-edition-2661939.html",
+		  	"https://www.mediamarkt.de/de/product/_sony-ps5-digital-ps-plus-90-tage-mitgliedschaft-2739309.html?utm_source=easymarketing&utm_medium=aff-content&utm_term=50004&utm_campaign=Deeplinkgenerator-AO&emid=60fb3e62a1914509d016e021",
+		  	"https://www.mediamarkt.de/de/product/_sony-playstation%C2%AE5-digital-edition-dualsense%E2%84%A2-2715825.html"
+		  ]
+		  @next_link_index = 0
 		  login
 		  start_cycle
 		end
@@ -52,8 +57,10 @@ class MediaMarktSraper
 
 	def product_available?
 		wait_longer
-		@page.goto("https://www.mediamarkt.de/de/product/_sony-playstation%C2%AE5-digital-edition-2661939.html", wait_until: 'domcontentloaded')
+		@next_link_index = 0 if @next_link_index == 3
+		@page.goto(@page_links[@next_link_index], wait_until: 'domcontentloaded')
 		# @page.goto("https://www.mediamarkt.de/de/product/_isy-ita-751-2-2668534.html", wait_until: 'domcontentloaded')
+		@next_link_index += 1 
 		wait
 		add_to_cart_btn = @page.query_selector("button[id='pdp-add-to-cart-button']")
 		@page.evaluate("document.querySelector(`button[id='pdp-add-to-cart-button']`).click()") if add_to_cart_btn
@@ -91,7 +98,7 @@ class MediaMarktSraper
 	def wait_longer
 		puts "waiting longer.."
 		# still need to tweak this one to lower it so that it does not trigger the captcha
-		sleep(rand(20..30))
+		sleep(rand(5..10))
 	end
 
 	def send_message(message)
