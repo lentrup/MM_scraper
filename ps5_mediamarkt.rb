@@ -4,11 +4,12 @@ require 'pry-byebug'
 require 'pry-byebug'
 require 'telegram/bot'
 require 'rest-client'
+require 'CGI'
 
 
 class MediaMarktSraper
 	def initialize
-		Puppeteer.launch(headless: true, args: ['--window-size=2560,1600','--no-sandbox']) do |browser|
+		Puppeteer.launch(headless: true, args: ['--window-size=1280,800','--no-sandbox']) do |browser|
 		  @page = browser.new_page
 		  @page.viewport = Puppeteer::Viewport.new(width: 1280, height: 800)
 		  @page_links =[
@@ -44,7 +45,7 @@ class MediaMarktSraper
 	end
 
 	def start_cycle
-		send_message("#{Time.new.to_s} | I am still online and runnning")
+		# send_message("#{Time.new.to_s} | I am still online and runnning")
 		add_to_cart_btn = product_available?
 		if add_to_cart_btn
 			send_message("#{Time.new.to_s} | PS5 AVAILABLE!!!!!!!!") 
@@ -80,9 +81,8 @@ class MediaMarktSraper
 		wait
 		@page.wait_for_selector(".StepWrapperstyled__StyledSummary-sc-1mi7ueb-4 .bGZfev")
 		purchase_btn = @page.query_selector(".StepWrapperstyled__StyledSummary-sc-1mi7ueb-4 .bGZfev")
-		# wait
-		# purchase_btn.click
-		binding.pry
+		wait
+		purchase_btn.click
 	end
 
 	def wait
@@ -106,5 +106,12 @@ class MediaMarktSraper
 	end
 end
 
-MediaMarktSraper.new
+
+begin
+	MediaMarktSraper.new
+rescue StandardError => e
+	RestClient.get("https://api.telegram.org/bot#{ENV["TELEGRAM_TOKEN"]}/sendMessage?chat_id=#{ENV["TELEGRAM_CHAT_ID"]}&text=#{CGI.escape e.full_message}")
+end
+
+
 
