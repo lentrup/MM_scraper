@@ -4,7 +4,7 @@ require 'pry-byebug'
 require 'pry-byebug'
 require 'telegram/bot'
 require 'rest-client'
-require 'CGI'
+require 'cgi'
 
 
 class MediaMarktSraper
@@ -110,6 +110,7 @@ end
 begin
 	MediaMarktSraper.new
 rescue StandardError => e
+	puts e.backtrace
 	RestClient.get("https://api.telegram.org/bot#{ENV["TELEGRAM_TOKEN"]}/sendMessage?chat_id=#{ENV["TELEGRAM_CHAT_ID"]}&text=#{CGI.escape e.full_message}")
 end
 
