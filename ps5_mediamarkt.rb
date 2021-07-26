@@ -5,7 +5,7 @@ require 'pry-byebug'
 require 'telegram/bot'
 require 'rest-client'
 require 'cgi'
-
+require 'time'
 
 class MediaMarktSraper
 	def initialize
@@ -25,7 +25,9 @@ class MediaMarktSraper
 
 	def login
 		@page.goto("https://www.mediamarkt.de/de/myaccount/auth/login", wait_until: 'domcontentloaded')
-		@page.wait_for_selector("button[id='privacy-layer-accept-all-button']")
+		wait
+		@page.wait_for_selector("button[id='privacy-layer-accept-all-button']", timeout: 5000)
+		@page.screenshot(path: "t.png")
 		accept_cookies = @page.query_selector("button[id='privacy-layer-accept-all-button']")
 		wait
 		accept_cookies.click
@@ -45,6 +47,7 @@ class MediaMarktSraper
 	end
 
 	def start_cycle
+		send_message("Bot is still online") if Time.now.strftime("%H:%M") == "19:00"
 		# send_message("#{Time.new.to_s} | I am still online and runnning")
 		add_to_cart_btn = product_available?
 		if add_to_cart_btn
@@ -59,17 +62,26 @@ class MediaMarktSraper
 	def product_available?
 		wait_longer
 		@next_link_index = 0 if @next_link_index == 3
+		puts "checking if #{@page_links[@next_link_index]} is available.."
 		@page.goto(@page_links[@next_link_index], wait_until: 'domcontentloaded')
 		# @page.goto("https://www.mediamarkt.de/de/product/_isy-ita-751-2-2668534.html", wait_until: 'domcontentloaded')
 		@next_link_index += 1 
-		wait
-		add_to_cart_btn = @page.query_selector("button[id='pdp-add-to-cart-button']")
+		
+		begin
+			@page.wait_for_selector("button[id='pdp-add-to-cart-button']", timeout: 5000 )
+			add_to_cart_btn = @page.query_selector("button[id='pdp-add-to-cart-button']")
+		rescue StandardError => e
+			p e
+			add_to_cart_btn = nil
+		end
+
 		@page.evaluate("document.querySelector(`button[id='pdp-add-to-cart-button']`).click()") if add_to_cart_btn
 		add_to_cart_btn
 	end
 
 	def go_to_checkout
 		wait
+		puts "going to checkout"
 		@page.goto("https://www.mediamarkt.de/checkout/payment", wait_until: 'domcontentloaded')
 		wait
 		# selecting the vorkasse option
@@ -110,6 +122,7 @@ end
 begin
 	MediaMarktSraper.new
 rescue StandardError => e
+	puts e.message
 	puts e.backtrace
 	RestClient.get("https://api.telegram.org/bot#{ENV["TELEGRAM_TOKEN"]}/sendMessage?chat_id=#{ENV["TELEGRAM_CHAT_ID"]}&text=#{CGI.escape e.full_message}")
 end
