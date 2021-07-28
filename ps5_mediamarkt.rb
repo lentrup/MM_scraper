@@ -9,7 +9,7 @@ require 'time'
 
 class MediaMarktSraper
 	def initialize
-		Puppeteer.launch(headless: false, args: ['--window-size=1280,800','--no-sandbox']) do |browser|
+		Puppeteer.launch(headless: true, args: ['--window-size=1280,800','--no-sandbox']) do |browser|
 		  @browser = browser
 		  set_page
 		  @page_links =[
