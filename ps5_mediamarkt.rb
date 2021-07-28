@@ -9,12 +9,12 @@ require 'time'
 
 class MediaMarktSraper
 	def initialize
-		Puppeteer.launch(headless: true, args: ['--window-size=1280,800','--no-sandbox']) do |browser|
-		  @page = browser.new_page
-		  @page.viewport = Puppeteer::Viewport.new(width: 1280, height: 800)
+		Puppeteer.launch(headless: false, args: ['--window-size=1280,800','--no-sandbox']) do |browser|
+		  @browser = browser
+		  set_page
 		  @page_links =[
 		  	"https://www.mediamarkt.de/de/product/_sony-playstation%C2%AE5-digital-edition-2661939.html",
-		  	"https://www.mediamarkt.de/de/product/_sony-ps5-digital-ps-plus-90-tage-mitgliedschaft-2739309.html?utm_source=easymarketing&utm_medium=aff-content&utm_term=50004&utm_campaign=Deeplinkgenerator-AO&emid=60fb3e62a1914509d016e021",
+		  	"https://www.mediamarkt.de/de/product/_sony-ps5-digital-ps-plus-90-tage-mitgliedschaft-2739309.html",
 		  	"https://www.mediamarkt.de/de/product/_sony-playstation%C2%AE5-digital-edition-dualsense%E2%84%A2-2715825.html"
 		  ]
 		  @next_link_index = 0
@@ -24,9 +24,10 @@ class MediaMarktSraper
 	end
 
 	def login
-		@page.goto("https://www.mediamarkt.de/de/myaccount/auth/login", wait_until: 'domcontentloaded')
-		wait
-		@page.wait_for_selector("button[id='privacy-layer-accept-all-button']", timeout: 5000)
+		@page = @browser.new_page
+		@page.goto("https://www.mediamarkt.de/de/myaccount/auth/login", wait_until: 'networkidle2')
+		wait_medium
+		# @page.wait_for_selector("button[id='privacy-layer-accept-all-button']", timeout: 5000)
 		@page.screenshot(path: "t.png")
 		accept_cookies = @page.query_selector("button[id='privacy-layer-accept-all-button']")
 		wait
@@ -61,12 +62,12 @@ class MediaMarktSraper
 
 	def product_available?
 		wait_longer
+		set_page
 		@next_link_index = 0 if @next_link_index == 3
 		puts "checking if #{@page_links[@next_link_index]} is available.."
-		@page.goto(@page_links[@next_link_index], wait_until: 'domcontentloaded')
-		# @page.goto("https://www.mediamarkt.de/de/product/_isy-ita-751-2-2668534.html", wait_until: 'domcontentloaded')
+		@page.goto(@page_links[@next_link_index], wait_until: 'networkidle2')
+		# @page.goto("https://www.mediamarkt.de/de/product/_isy-ita-751-2-2668534.html", wait_until: 'networkidle2')
 		@next_link_index += 1 
-		
 		begin
 			@page.wait_for_selector("button[id='pdp-add-to-cart-button']", timeout: 5000 )
 			add_to_cart_btn = @page.query_selector("button[id='pdp-add-to-cart-button']")
@@ -76,13 +77,15 @@ class MediaMarktSraper
 		end
 
 		@page.evaluate("document.querySelector(`button[id='pdp-add-to-cart-button']`).click()") if add_to_cart_btn
+		@page.close
 		add_to_cart_btn
 	end
 
 	def go_to_checkout
+		set_page
 		wait
 		puts "going to checkout"
-		@page.goto("https://www.mediamarkt.de/checkout/payment", wait_until: 'domcontentloaded')
+		@page.goto("https://www.mediamarkt.de/checkout/payment", wait_until: 'networkidle2')
 		wait
 		# selecting the vorkasse option
 		@page.wait_for_selector(".dttyiN .bGZfev")
@@ -95,6 +98,7 @@ class MediaMarktSraper
 		purchase_btn = @page.query_selector(".StepWrapperstyled__StyledSummary-sc-1mi7ueb-4 .bGZfev")
 		wait
 		purchase_btn.click
+		# binding.pry
 	end
 
 	def wait
@@ -116,6 +120,12 @@ class MediaMarktSraper
 	def send_message(message)
 		RestClient.get("https://api.telegram.org/bot#{ENV["TELEGRAM_TOKEN"]}/sendMessage?chat_id=#{ENV["TELEGRAM_CHAT_ID"]}&text=#{message}&parse_mode=markdown")
 	end
+
+	def set_page
+		@page = @browser.new_page
+		@page.viewport = Puppeteer::Viewport.new(width: 1280, height: 800)
+	end
+
 end
 
 
