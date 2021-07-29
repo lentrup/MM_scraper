@@ -134,6 +134,7 @@ begin
 rescue StandardError => e
 	puts e.message
 	puts e.backtrace
+	MediaMarktSraper.new
 	RestClient.get("https://api.telegram.org/bot#{ENV["TELEGRAM_TOKEN"]}/sendMessage?chat_id=#{ENV["TELEGRAM_CHAT_ID"]}&text=#{CGI.escape e.full_message}")
 end
 
