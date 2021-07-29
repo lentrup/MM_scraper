@@ -28,7 +28,6 @@ class MediaMarktSraper
 		@page.goto("https://www.mediamarkt.de/de/myaccount/auth/login", wait_until: 'networkidle2')
 		wait_medium
 		# @page.wait_for_selector("button[id='privacy-layer-accept-all-button']", timeout: 5000)
-		@page.screenshot(path: "t.png")
 		accept_cookies = @page.query_selector("button[id='privacy-layer-accept-all-button']")
 		wait
 		accept_cookies.click
