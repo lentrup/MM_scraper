@@ -9,7 +9,7 @@ require 'time'
 
 class MediaMarktSraper
 	def initialize
-		Puppeteer.launch(headless: true, args: ['--window-size=1280,800','--no-sandbox']) do |browser|
+		Puppeteer.launch(headless: true, args: ['--window-size=1280,800','--no-sandbox'], timeout:0) do |browser|
 		  @browser = browser
 		  set_page
 		  @page_links =[
@@ -45,6 +45,7 @@ class MediaMarktSraper
 		login_btn = @page.query_selector("button[id='mms-login-form__login-button']")
 		login_btn.click
 		wait
+		puts "logged in now"
 	end
 
 	def start_cycle
@@ -134,6 +135,7 @@ begin
 rescue StandardError => e
 	puts e.message
 	puts e.backtrace
+	sleep(10)
 	MediaMarktSraper.new
 	RestClient.get("https://api.telegram.org/bot#{ENV["TELEGRAM_TOKEN"]}/sendMessage?chat_id=#{ENV["TELEGRAM_CHAT_ID"]}&text=#{CGI.escape e.full_message}")
 end
